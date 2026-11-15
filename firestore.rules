@@ -1,0 +1,166 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(ownerId) {
+      return isSignedIn() && request.auth.uid == ownerId;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'nombre', 'rol', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'nombre', 'especialidad', 'cmp', 'rne', 'rol', 'createdAt', 'updatedAt']) &&
+        isValidId(data.uid) &&
+        data.uid == request.auth.uid &&
+        data.uid == userId &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 200 &&
+        data.nombre is string && data.nombre.size() >= 1 && data.nombre.size() <= 120 &&
+        (!('especialidad' in data) || (data.especialidad is string && data.especialidad.size() <= 160)) &&
+        (!('cmp' in data) || (data.cmp is string && data.cmp.size() <= 40)) &&
+        (!('rne' in data) || (data.rne is string && data.rne.size() <= 40)) &&
+        data.rol in ['Doctora', 'Equipo Asistencial'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPatient(data, patientId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'nombres', 'apellidos', 'dni',
+          'hc', 'hojaControl', 'indicacionGuia', 'notasVoz',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'ownerId', 'nombres', 'apellidos', 'dni',
+          'celular', 'fechaNacimiento', 'direccion', 'ocupacion',
+          'etapaActual', 'proximaCita', 'ultimaCita',
+          'hc', 'hojaControl', 'indicacionGuia', 'notasVoz',
+          'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.id == patientId &&
+        isValidId(data.ownerId) &&
+        data.ownerId == request.auth.uid &&
+        data.nombres is string && data.nombres.size() >= 1 && data.nombres.size() <= 120 &&
+        data.apellidos is string && data.apellidos.size() >= 1 && data.apellidos.size() <= 120 &&
+        data.dni is string && data.dni.size() >= 1 && data.dni.size() <= 32 &&
+        (!('celular' in data) || (data.celular is string && data.celular.size() <= 40)) &&
+        (!('fechaNacimiento' in data) || (data.fechaNacimiento is string && data.fechaNacimiento.size() <= 20)) &&
+        (!('direccion' in data) || (data.direccion is string && data.direccion.size() <= 240)) &&
+        (!('ocupacion' in data) || (data.ocupacion is string && data.ocupacion.size() <= 120)) &&
+        (!('etapaActual' in data) || (data.etapaActual is string && data.etapaActual.size() <= 120)) &&
+        (!('proximaCita' in data) || (data.proximaCita is string && data.proximaCita.size() <= 40)) &&
+        (!('ultimaCita' in data) || (data.ultimaCita is string && data.ultimaCita.size() <= 40)) &&
+        data.hc is map &&
+        data.hc.keys().hasAll(['antecedentes', 'citas']) &&
+        data.hc.keys().hasOnly(['antecedentes', 'citas', 'analisisEvolucionIA']) &&
+        data.hc.antecedentes is map &&
+        data.hc.citas is list && data.hc.citas.size() >= 1 && data.hc.citas.size() <= 50 &&
+        data.hc.citas[0] is map &&
+        (!('analisisEvolucionIA' in data.hc) || data.hc.analisisEvolucionIA is map) &&
+        data.hojaControl is map &&
+        data.hojaControl.keys().hasAll(['citas', 'fechas', 'filas']) &&
+        data.hojaControl.keys().hasOnly(['citas', 'fechas', 'filas']) &&
+        data.hojaControl.citas is list && data.hojaControl.citas.size() <= 30 &&
+        (data.hojaControl.citas.size() == 0 || data.hojaControl.citas[0] is map) &&
+        data.hojaControl.fechas is map &&
+        data.hojaControl.filas is list && data.hojaControl.filas.size() <= 40 &&
+        (data.hojaControl.filas.size() == 0 || data.hojaControl.filas[0] is map) &&
+        data.indicacionGuia is map &&
+        data.indicacionGuia.keys().hasAll(['doctora', 'planSemanal', 'reglasImportantes', 'fuentesProteina', 'higieneSuenoPautas']) &&
+        data.indicacionGuia.doctora is map &&
+        data.indicacionGuia.planSemanal is list && data.indicacionGuia.planSemanal.size() <= 14 &&
+        (data.indicacionGuia.planSemanal.size() == 0 || data.indicacionGuia.planSemanal[0] is map) &&
+        data.indicacionGuia.reglasImportantes is list && data.indicacionGuia.reglasImportantes.size() <= 50 &&
+        (data.indicacionGuia.reglasImportantes.size() == 0 || data.indicacionGuia.reglasImportantes[0] is string) &&
+        data.indicacionGuia.fuentesProteina is list && data.indicacionGuia.fuentesProteina.size() <= 50 &&
+        (data.indicacionGuia.fuentesProteina.size() == 0 || data.indicacionGuia.fuentesProteina[0] is map) &&
+        data.indicacionGuia.higieneSuenoPautas is list && data.indicacionGuia.higieneSuenoPautas.size() <= 50 &&
+        (data.indicacionGuia.higieneSuenoPautas.size() == 0 || data.indicacionGuia.higieneSuenoPautas[0] is string) &&
+        data.notasVoz is list && data.notasVoz.size() <= 200 &&
+        (data.notasVoz.size() == 0 || data.notasVoz[0] is map) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isVerified() &&
+        isValidId(userId) &&
+        isOwner(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerified() &&
+        isValidId(userId) &&
+        isOwner(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly(['nombre', 'especialidad', 'cmp', 'rne', 'rol', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['email', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['nombre', 'email', 'especialidad', 'cmp', 'rne', 'rol', 'updatedAt'])
+        );
+      allow delete: if false;
+    }
+
+    match /patients/{patientId} {
+      allow get: if isVerified() && isValidId(patientId) && isOwner(existing().ownerId);
+      allow list: if isVerified() && existing().ownerId == request.auth.uid;
+      allow create: if isVerified() &&
+        isValidId(patientId) &&
+        isValidPatient(incoming(), patientId) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerified() &&
+        isValidId(patientId) &&
+        isOwner(existing().ownerId) &&
+        isValidPatient(incoming(), patientId) &&
+        incoming().id == existing().id &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'nombres', 'apellidos', 'dni', 'celular', 'fechaNacimiento',
+            'direccion', 'ocupacion', 'etapaActual', 'proximaCita', 'ultimaCita',
+            'updatedAt'
+          ]) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['hc', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['hojaControl', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['indicacionGuia', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['notasVoz', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'nombres', 'apellidos', 'dni', 'celular', 'fechaNacimiento',
+            'direccion', 'ocupacion', 'etapaActual', 'proximaCita', 'ultimaCita',
+            'hc', 'hojaControl', 'indicacionGuia', 'notasVoz', 'updatedAt'
+          ])
+        );
+      allow delete: if isVerified() && isValidId(patientId) && isOwner(existing().ownerId);
+    }
+  }
+}

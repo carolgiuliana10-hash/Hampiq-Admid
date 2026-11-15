@@ -1,0 +1,10 @@
+{
+  "name": "Hampiq admi",
+  "description": "App de gestión médica integral para seguimiento de pacientes en menopausia con diseño minimalista, funcional y totalmente responsive.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

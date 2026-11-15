@@ -1,0 +1,159 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "Perfil de Doctora / Usuario",
+      "description": "Perfil privado de la doctora o miembro del equipo médico con nombre, especialidad, CMP, RNE y correo.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 200
+        },
+        "nombre": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "especialidad": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "cmp": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "rne": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "rol": {
+          "type": "string",
+          "enum": ["Doctora", "Equipo Asistencial"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "nombre", "rol", "createdAt", "updatedAt"]
+    },
+    "Patient": {
+      "title": "Expediente Clínico de Paciente",
+      "description": "Historia clínica integral, hoja de control, indicación médica y notas clínicas sincronizadas en la nube.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "nombres": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "apellidos": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "dni": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "celular": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "fechaNacimiento": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "direccion": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "ocupacion": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "etapaActual": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "proximaCita": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "ultimaCita": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "hc": {
+          "type": "object"
+        },
+        "hojaControl": {
+          "type": "object"
+        },
+        "indicacionGuia": {
+          "type": "object"
+        },
+        "notasVoz": {
+          "type": "array"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "nombres",
+        "apellidos",
+        "dni",
+        "hc",
+        "hojaControl",
+        "indicacionGuia",
+        "notasVoz",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Perfil privado de la doctora o usuario autenticado."
+    },
+    "/patients/{patientId}": {
+      "schema": {
+        "$ref": "#/entities/Patient"
+      },
+      "description": "Expedientes clínicos privados propiedad del usuario autenticado."
+    }
+  }
+}
